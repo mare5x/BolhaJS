@@ -3,6 +3,7 @@
  * Parse the results and generate a HTML report. 
 */
 
+const fs = require('fs').promises;
 const requests = require('request-promise-native');
 const cheerio = require('cheerio');
 
@@ -51,9 +52,8 @@ let get_articles_on_page = function ($) {
     return articles;
 };
 
-let get_articles = async function (query, pages=-1) {
+let get_articles = async function (url, pages=-1) {
     // If `pages` is -1, get all pages otherwise, up to `pages`
-    let url = build_query_url(query);
 
     console.log('Fetching page 1 ...');
     const $ = await fetch_page(url, 1);
@@ -78,9 +78,25 @@ let get_articles = async function (query, pages=-1) {
     return articles;
 }
 
-let main = async function () {
-    let articles = await get_articles('lenovo', 1);
+let process_url = async function (url) {
+    let articles = await get_articles(url, 1);
     console.log(`Found ${articles.length} articles`);
+};
+
+let read_json_file = async function (path) {
+    let raw = await fs.readFile(path, { encoding: 'utf8', flag: 'r' });
+    return JSON.parse(raw);
+};
+
+let main = async function () {
+    let settings = await read_json_file('settings.json');
+    console.log(settings);
+
+    promises = [];
+    for (let url of settings.urls) {
+        promises.push(process_url(url));
+    }
+    await Promise.all(promises);
 };
 
 
