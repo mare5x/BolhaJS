@@ -3,13 +3,22 @@
  * Parse the results and generate a HTML report. 
 */
 
-const fs = require('fs').promises;
+const fs = require('fs');
 const http = require('http');
 const requests = require('request-promise-native');
 const cheerio = require('cheerio');
 
 
 const BOLHA_URL = 'http://www.bolha.com';
+const HTML_HEAD = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>BolhaJS</title>
+    </head>
+    <body>
+`;
 
 
 let fetch = async function (url) {
@@ -122,48 +131,45 @@ let process_url = async function (url) {
     return articles;
 };
 
+let create_html_report_file = async function (path) {
+    let settings = await read_json_file('settings.json');
+    
+    let stream = fs.createWriteStream(path, { flags: 'w', encoding: 'utf8' });
+    stream.write(HTML_HEAD);
+
+    async function proc(url) {
+        let articles = await process_url(url);
+        for (let article of articles) {
+            let html = article_to_html(article);
+            stream.write(html);
+        }
+    }
+
+    promises = [];
+    for (let url of settings.urls) {
+        promises.push(proc(url));
+    }
+    await Promise.all(promises);
+
+    stream.write('</body></html>');
+    stream.end()
+}
+
 let read_json_file = async function (path) {
-    let raw = await fs.readFile(path, { encoding: 'utf8', flag: 'r' });
+    let raw = await fs.promises.readFile(path, { encoding: 'utf8', flag: 'r' });
     return JSON.parse(raw);
 };
 
 let main = async function () {
-    let settings = await read_json_file('settings.json');
-    
-    let done = false;
+    let path = "report.html";
+    await create_html_report_file(path);
 
     async function request_cb(request, response) {
-        if (done) return;
         response.writeHead(200, {
             'Content-Type': 'text/html'
         });
-        
-        response.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>BolhaJS</title>
-            </head>
-            <body>
-        `);
-
-        async function proc(url) {
-            let articles = await process_url(url);
-            for (let article of articles) {
-                let html = article_to_html(article);
-                response.write(html, 'utf8');
-            }
-        }
-
-        promises = [];
-        for (let url of settings.urls) {
-            promises.push(proc(url));
-        }
-        await Promise.all(promises);
-
-        response.end(`</body></html>`, 'utf8');
-        done = true;
+        response.write(await fs.promises.readFile(path, { encoding: 'utf8', flag: 'r' }));
+        response.end();
     }
 
     const PORT = 3000;
