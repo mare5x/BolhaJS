@@ -19,23 +19,38 @@ class InputDialog extends Component {
     this.props.onConfirm(this.state.text);
   }
 
+  _cancelButtonPressed = () => {
+    this.props.onCancel();
+  }
+
   render() {
     return (
       <Modal 
         visible={this.props.visible}
         transparent={true}
       >
-        <View style={styles.inputDialog}>
-          <TextInput 
-            autoFocus={true}
-            placeholder="Enter text"
-            onChangeText={this._textChanged}
-          />
+        {/* The outer view centers the inner view ... */}
+        <View style={styles.inputDialogOuter}>
+          <View style={styles.inputDialogInner}>
+            <TextInput 
+              style={styles.textInput}
+              autoFocus={true}
+              placeholder="Enter text"
+              onChangeText={this._textChanged}
+            />
 
-          <Button 
-            onPress={this._confirmButtonPressed}
-            title="Confirm"
-          />
+            <View style={{flexDirection: "row", justifyContent: "space-around", alignSelf: "stretch"}}>
+              <Button 
+                onPress={this._cancelButtonPressed}
+                title="Cancel"
+              />
+
+              <Button 
+                onPress={this._confirmButtonPressed}
+                title="Confirm"
+              />
+            </View>
+          </View>
         </View>
       </Modal>
     );
@@ -47,16 +62,19 @@ class TextList extends Component {
     super(props);
 
     this._id = 0;
-  }
-
-  state = {
-    entries: [],
-    inputDialogVisible: false
+    this.state = {
+      entries: [],
+      inputDialogVisible: false
+    }
   }
 
   _inputDialogConfirmed = (text) => {
     this.setState({ inputDialogVisible: false });
     this._addItem(text);
+  }
+
+  _inputDialogCancelled = () => {
+    this.setState({ inputDialogVisible: false });
   }
 
   _addItem = (text) => {
@@ -93,6 +111,7 @@ class TextList extends Component {
         <InputDialog 
           visible={this.state.inputDialogVisible}
           onConfirm={this._inputDialogConfirmed}
+          onCancel={this._inputDialogCancelled}
         />
 
         <FlatList
@@ -241,13 +260,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
 
-  inputDialog: {
-    padding: 10, 
-    margin: 10, 
-    backgroundColor: 'skyblue', 
-    height: '50%', 
-    justifyContent: "center", 
+  inputDialogOuter: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center"
+  },
+
+  inputDialogInner: {
+    backgroundColor: 'skyblue', 
+    height: '40%', 
+    width: '90%',
+    justifyContent: "space-around",
+    alignItems: "center",
+    borderRadius: 10
+  },
+
+  textInput: {
+    padding: 10,
+    backgroundColor: "rgba(247,247,247,1.0)",
+    borderRadius: 4
   },
 
   sectionListItem: {
