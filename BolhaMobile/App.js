@@ -3,7 +3,7 @@ import * as bolha from './Bolha';
 import React, { Component } from 'react';
 import { 
     Button, Text, View, FlatList, Image, TextInput, Linking, 
-    Modal, SectionList, StyleSheet } from 'react-native';
+    Modal, SectionList, StyleSheet, ActivityIndicator } from 'react-native';
 
 
 class InputDialog extends Component {
@@ -111,7 +111,7 @@ class TextList extends Component {
 
 class ArticleList extends Component {
   state = {
-    sections: []
+    sections: []  // { title: '', data: [articles], isLoading: bool }
   };
 
   _addQuery = (query) => {
@@ -122,7 +122,7 @@ class ArticleList extends Component {
     });
 
     if (idx === -1) {
-      let section = { title: query, data: [] };
+      let section = { title: query, data: [], isLoading: false };
       new_sections.push(section);
     }
 
@@ -130,20 +130,35 @@ class ArticleList extends Component {
   }
 
   _fetchArticlesQuery = async (query) => {
+    function updateSectionState(state, args) {
+      let sections = state.sections.slice();
+      // The section exists because it was added in _addQuery.
+      let section;
+      for (let sect of sections) {
+        if (sect.title === query) {
+          section = sect;
+          break;
+        }
+      }
+
+      if (args.hasOwnProperty('data')) { 
+        section.data = args.data;
+      }
+      if (args.hasOwnProperty('isLoading')) {
+        section.isLoading = args.isLoading;
+      }
+
+      return { sections: sections };
+    }
+
+    this.setState(state => updateSectionState(state, {isLoading: true}));
+    
     let articles = await bolha.get_articles_query(query);
 
-    let new_sections = this.state.sections.slice();
-    // The section exists because it was added in _addQuery.
-    for (let sect of new_sections) {
-      if (sect.title === query) {
-        sect.data = articles;
-        break;
-      }
-    }
-    this.setState({ sections: new_sections });
+    this.setState(state => updateSectionState(state, {isLoading: false, data: articles}));
   }
 
-  _fetchArticles = async () => {
+  _fetchArticles = async () => {    
     let promises = [];
     for (let section of this.state.sections) {
       promises.push(this._fetchArticlesQuery(section.title));
@@ -170,7 +185,10 @@ class ArticleList extends Component {
   }
 
   _sectionRenderHeader = ({ section }) => (
-    <Text style={styles.sectionHeader}>{section.title.toUpperCase()}</Text>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{section.title.toUpperCase()}</Text>
+      {section.isLoading && <ActivityIndicator/>}
+    </View>
   );
 
   render() {
@@ -212,9 +230,15 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     paddingRight: 10,
     paddingBottom: 2,
-    fontSize: 24,
-    fontWeight: 'bold',
     backgroundColor: 'rgba(247,247,247,1.0)',
+    flex: 1,
+    flexDirection: "row", 
+    justifyContent: "space-around",
+  },
+
+  sectionHeaderText: {
+    fontSize: 24, 
+    fontWeight: 'bold'
   },
 
   inputDialog: {
