@@ -4,7 +4,8 @@ import React, { Component } from 'react';
 import { 
     Button, Text, View, FlatList, Image, TextInput, Linking, 
     Modal, SectionList, StyleSheet, ActivityIndicator, BackHandler,
-    TouchableWithoutFeedback, Keyboard } from 'react-native';
+    TouchableWithoutFeedback, Keyboard, AppState } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 
 
 class InputDialog extends Component {
@@ -138,11 +139,46 @@ class TextList extends Component {
 }
 
 class ArticleList extends Component {
-  state = {
-    sections: []  // { title: '', data: [articles], isLoading: bool }
-  };
+  constructor(props) {
+    super(props);
+    
+    this.state = {
+      sections: []  // { title: '', data: [articles], isLoading: bool }
+    }
+  }
 
-  _addQuery = (query) => {
+  async componentDidMount() {
+    AppState.addEventListener('change', this._handleAppStateChange);
+    await this._loadSections();
+  }
+
+  async componentWillUnmount() {
+    await this._storeSections();
+  }
+
+  _handleAppStateChange = async (nextState) => {
+    // When minimizing the app, save state.
+    if (nextState != "active") {
+      await this._storeSections();
+    }
+  }
+
+  _loadSections = async () => {
+    let sections = await AsyncStorage.getItem("@sections");
+    console.log("Read sections: ", sections);
+    if (sections) {
+      sections = JSON.parse(sections);
+      this.setState({ sections: sections });
+    }
+  }
+
+  _storeSections = async () => {
+    let sections = JSON.stringify(this.state.sections);
+    console.log("Storing sections: ", sections);
+    await AsyncStorage.setItem("@sections", sections);
+  }
+
+  _addQuery = async (query) => {
     let new_sections = this.state.sections.slice();
 
     let idx = new_sections.findIndex((el) => {
