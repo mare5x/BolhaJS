@@ -3,12 +3,17 @@ import * as bolha from './Bolha';
 import React, { Component } from 'react';
 import { 
     Button, Text, View, FlatList, Image, TextInput, Linking, 
-    Modal, SectionList, StyleSheet, ActivityIndicator } from 'react-native';
+    Modal, SectionList, StyleSheet, ActivityIndicator, BackHandler,
+    TouchableWithoutFeedback, Keyboard } from 'react-native';
 
 
 class InputDialog extends Component {
   state = {
     text: "",
+  }
+
+  _handleBackPress = () => {
+    this._cancelButtonPressed();
   }
 
   _textChanged = (text) => {
@@ -28,30 +33,34 @@ class InputDialog extends Component {
       <Modal 
         visible={this.props.visible}
         transparent={true}
+        onRequestClose={this._handleBackPress}
       >
-        {/* The outer view centers the inner view ... */}
-        <View style={styles.inputDialogOuter}>
-          <View style={styles.inputDialogInner}>
-            <TextInput 
-              style={styles.textInput}
-              autoFocus={true}
-              placeholder="Enter text"
-              onChangeText={this._textChanged}
-            />
-
-            <View style={{flexDirection: "row", justifyContent: "space-around", alignSelf: "stretch"}}>
-              <Button 
-                onPress={this._cancelButtonPressed}
-                title="Cancel"
+        {/* This closes the keyboard when pressing something else ... */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          {/* The outer view centers the inner view ... */}
+          <View style={styles.inputDialogOuter}>
+            <View style={styles.inputDialogInner}>
+              <TextInput 
+                style={styles.textInput}
+                autoFocus={true}
+                placeholder="Enter text"
+                onChangeText={this._textChanged}
               />
 
-              <Button 
-                onPress={this._confirmButtonPressed}
-                title="Confirm"
-              />
+              <View style={{flexDirection: "row", justifyContent: "space-around", alignSelf: "stretch"}}>
+                <Button 
+                  onPress={this._cancelButtonPressed}
+                  title="Cancel"
+                />
+
+                <Button 
+                  onPress={this._confirmButtonPressed}
+                  title="Confirm"
+                />
+              </View>
             </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     );
   }
@@ -263,7 +272,8 @@ const styles = StyleSheet.create({
   inputDialogOuter: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    backgroundColor: "#00000080"
   },
 
   inputDialogInner: {
