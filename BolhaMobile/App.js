@@ -4,10 +4,13 @@ import React, { Component } from 'react';
 import { 
     Button, Text, View, FlatList, Image, TextInput, Linking, 
     Modal, SectionList, StyleSheet, ActivityIndicator, BackHandler,
-    TouchableWithoutFeedback, Keyboard, AppState, Alert } from 'react-native';
+    TouchableWithoutFeedback, Keyboard, AppState, Alert, TouchableOpacity,
+    Animated } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import { LongPressGestureHandler, State } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 
+const Separator = () => <View style={styles.separator} />;
 
 class InputDialog extends Component {
   state = {
@@ -73,21 +76,46 @@ class QueryOption extends Component {
     super(props);
   }
 
+  _onDeleteAction = () => {
+    const query = this.props.query;
+    this.props.onDelete(query);
+  }
+
+  _onSwipeLeft = (progress, dragX) => {
+    const scale = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [0.5, 1],
+      extrapolate: 'clamp'
+    });
+
+    return (
+      <View style={styles.queryOptionDeleteSwipe}>
+        <TouchableOpacity onPress={this._onDeleteAction}>
+          <Animated.Text 
+            style={[
+              styles.queryOptionDeleteSwipeText,
+              { 
+                transform: [{ scale }]
+              }]
+            }>
+            Delete
+          </Animated.Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   render() {
     const query = this.props.query;
 
     return (
-      <LongPressGestureHandler
-        onHandlerStateChange={({ nativeEvent }) => {
-          if (nativeEvent.state === State.ACTIVE) {
-            this.props.onDelete(query);
-          }
-        }}
+      <Swipeable
+        renderLeftActions={this._onSwipeLeft}
       >
         <View style={styles.queryOption}>
           <Text>{query}</Text>
         </View>
-      </LongPressGestureHandler>
+      </Swipeable>
     );
   }
 }
@@ -160,6 +188,7 @@ class TextList extends Component {
         <FlatList
           data={this.state.entries}
           renderItem={this._renderItem}
+          ItemSeparatorComponent={Separator}
         />
         
         <Button 
@@ -345,6 +374,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
 
+  separator: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "black",
+    marginLeft: 10
+  },
+
   inputDialogOuter: {
     flex: 1,
     justifyContent: "center",
@@ -380,6 +416,19 @@ const styles = StyleSheet.create({
   },
 
   queryOption: {
+    padding: 10,
+    backgroundColor: "#fff"  // Weird overlap issue if this isn't set!
+  },
+
+  queryOptionDeleteSwipe: {
+    justifyContent: "center",
+    backgroundColor: "red",
     padding: 10
+  },
+
+  queryOptionDeleteSwipeText: {
+    color: "white",
+    fontWeight: '600',
+    padding: 20
   }
 });
