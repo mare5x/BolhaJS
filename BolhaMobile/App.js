@@ -4,8 +4,9 @@ import React, { Component } from 'react';
 import { 
     Button, Text, View, FlatList, Image, TextInput, Linking, 
     Modal, SectionList, StyleSheet, ActivityIndicator, BackHandler,
-    TouchableWithoutFeedback, Keyboard, AppState } from 'react-native';
+    TouchableWithoutFeedback, Keyboard, AppState, Alert } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
+import { LongPressGestureHandler, State } from 'react-native-gesture-handler';
 
 
 class InputDialog extends Component {
@@ -67,6 +68,30 @@ class InputDialog extends Component {
   }
 }
 
+class QueryOption extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    const query = this.props.query;
+
+    return (
+      <LongPressGestureHandler
+        onHandlerStateChange={({ nativeEvent }) => {
+          if (nativeEvent.state === State.ACTIVE) {
+            this.props.onDelete(query);
+          }
+        }}
+      >
+        <View style={styles.queryOption}>
+          <Text>{query}</Text>
+        </View>
+      </LongPressGestureHandler>
+    );
+  }
+}
+
 class TextList extends Component {
   constructor(props) {
     super(props);
@@ -107,11 +132,19 @@ class TextList extends Component {
     return true;
   }
 
+  _removeItem = (text) => {
+    this.setState(state => {
+      return { entries: state.entries.filter(entry => entry.text !== text) };
+    });
+    this.props.itemRemoved(text);
+  }
+
   _renderItem = ({ item }) => {
     return (
-      <View style={{backgroundColor: "red"}}>
-        <Text>{item.text}</Text>
-      </View>
+      <QueryOption 
+        query={item.text}
+        onDelete={this._removeItem}
+      />
     );
   }
 
@@ -193,6 +226,12 @@ class ArticleList extends Component {
     this.setState({ sections: new_sections });
   }
 
+  _removeSection = (sectionTitle) => {
+    this.setState(state => {
+      return { sections: state.sections.filter(section => section.title !== sectionTitle) };
+    });
+  }
+
   _fetchArticlesQuery = async (query) => {
     function updateSectionState(state, args) {
       let sections = state.sections.slice();
@@ -260,6 +299,7 @@ class ArticleList extends Component {
       <View style={{flex: 1}}>
         <TextList 
           itemAdded={this._addQuery}
+          itemRemoved={this._removeSection}
         />
 
         <Button
@@ -337,5 +377,9 @@ const styles = StyleSheet.create({
     width: 210,  // Thumbnails are 210x210 px site wide
     height: 210,
     resizeMode: 'contain'
+  },
+
+  queryOption: {
+    padding: 10
   }
 });
