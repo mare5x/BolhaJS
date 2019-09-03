@@ -76,6 +76,11 @@ class QueryOption extends Component {
     super(props);
   }
 
+  _onTap = () => {
+    const query = this.props.query;
+    this.props.onTap(query);
+  }
+
   _onDeleteAction = () => {
     const query = this.props.query;
     this.props.onDelete(query);
@@ -113,7 +118,9 @@ class QueryOption extends Component {
         renderLeftActions={this._onSwipeLeft}
       >
         <View style={styles.queryOption}>
-          <Text>{query}</Text>
+          <TouchableOpacity onPress={this._onTap}>
+            <Text>{query}</Text>
+          </TouchableOpacity>
         </View>
       </Swipeable>
     );
@@ -172,6 +179,7 @@ class TextList extends Component {
       <QueryOption 
         query={item.text}
         onDelete={this._removeItem}
+        onTap={this.props.onTap}
       />
     );
   }
@@ -204,6 +212,8 @@ class ArticleList extends Component {
   constructor(props) {
     super(props);
     
+    this._sectionListRef = null;
+
     this.state = {
       sections: []  // { title: '', data: [articles], isLoading: bool }
     }
@@ -238,6 +248,27 @@ class ArticleList extends Component {
     let sections = JSON.stringify(this.state.sections);
     console.log("Storing sections: ", sections);
     await AsyncStorage.setItem("@sections", sections);
+  }
+
+  _jumpToSection = (sectionTitle) => {
+    let section_index = this.state.sections.findIndex(el => el.title === sectionTitle);
+    this._sectionListRef.scrollToLocation({ sectionIndex: section_index, itemIndex: 0 });
+  }
+
+  _jumpToTop = () => {
+    if (this.state.sections.length > 0) {
+      this._jumpToSection(this.state.sections[0].title);
+    }
+  }
+
+  _jumpToTopButton = () => {
+    return (
+      <TouchableOpacity onPress={this._jumpToTop}>
+        <Text>
+          To top
+        </Text>
+      </TouchableOpacity>
+    );
   }
 
   _addQuery = async (query) => {
@@ -329,6 +360,7 @@ class ArticleList extends Component {
         <TextList 
           itemAdded={this._addQuery}
           itemRemoved={this._removeSection}
+          onTap={this._jumpToSection}
         />
 
         <Button
@@ -342,7 +374,9 @@ class ArticleList extends Component {
           renderItem={this._sectionRenderItem}
           renderSectionHeader={this._sectionRenderHeader}
           contentContainerStyle={styles.sectionListItem}
-          ListFooterComponent={() => <Text>END</Text>}
+          ListFooterComponent={this._jumpToTopButton}
+          ref={component => (this._sectionListRef = component)}
+          onScrollToIndexFailed={(info) => console.error(info)}
         />
       </View>
     );
