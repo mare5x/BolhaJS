@@ -1,11 +1,72 @@
-/** 
- * Watch for changes to multiple filtered queries of articles.
- * Parse the results and generate a HTML report. 
-*/
-
 const cheerio = require('react-native-cheerio');
 
 const BOLHA_URL = 'http://www.bolha.com';
+
+const _QUERY_KEY = "iskanje?q";
+const _PRICE_SORT_KEY = "priceSortField";
+const _SORT_KEY = "sort";
+const _AGE_KEY = "datePlaced";
+
+export const SORT_OPTIONS = {
+    RELEVANT: 0,
+    RECENT_FIRST: 1,
+    DUE_FOR_EXPIRATION: 2,
+    PRICE_LOWEST_FIRST: 3,
+    PRICE_HIGHEST_FIRST: 4
+};
+
+export const AGE_OPTIONS = {
+    LAST_8_HOURS: "V+zadnjih+8+urah",
+    TODAY: "Danes",
+    YESTERDAY: "V%C4%8Deraj",
+    LAST_WEEK: "Zadnji+teden",
+    LAST_MONTH: "Zadnji+mesec",
+    OLDER: "Starej%C5%A1i+oglasi"
+};
+
+export function sort_option_to_string(option) {
+    switch (option) {
+        case "RELEVANT": return "Most relevant";
+        case "RECENT_FIRST": return "Recent first";
+        case "DUE_FOR_EXPIRATION": return "Due for expiration";
+        case "PRICE_LOWEST_FIRST": return "Price: lowest first";
+        case "PRICE_HIGHEST_FIRST": return "Price: highest first";
+    }
+}
+
+export function age_option_to_string(option) {
+    switch (option) {
+        case "LAST_8_HOURS": return "Last 8 hours";
+        case "TODAY": return "Today";
+        case "YESTERDAY": return "Yesterday";
+        case "LAST_WEEK": return "Last week";
+        case "LAST_MONTH": return "Last month";
+        case "OLDER": return "Older";
+    }
+}
+
+export class QueryInfo {
+    constructor(info) {
+        this.query = info.query || '';
+        this.price_min = info.price_min || -1;
+        this.price_max = info.price_max || -1;
+        this.sort = info.sort || SORT_OPTIONS.RECENT_FIRST;
+        this.age = info.age || null;
+        this.pages = info.pages || 1;
+    }
+
+    build_url = () => {
+        let q = `/${_QUERY_KEY}=${this.query}`;
+        q += `&${_SORT_KEY}=${this.sort}`;
+        if (this.price_min >= 0 && this.price_max >= 0) {
+            q += `&${_PRICE_SORT_KEY}=${this.price_min}|${this.price_max}`;
+        }
+        if (this.age) {
+            q += `&${_AGE_KEY}=${this.age}`;
+        }
+        return BOLHA_URL + q;
+    }
+}
 
 let agent_fetch = async function (url) {
     let resp = await fetch(url, {
@@ -21,11 +82,6 @@ let fetch_page = async function (url, page) {
     let html = await agent_fetch(full_url);
     return cheerio.load(html);
 };
-
-let build_query_url = function (query, sort = 1) {
-    const query_fmt = `/iskanje?q=${query}&sort=${sort}`;
-    return BOLHA_URL + query_fmt;
-}
 
 let get_page_count = function ($) {
     let el = $('div.pager a.last');
@@ -101,37 +157,7 @@ export let get_articles = async function (url, pages=-1, raw=false) {
     return articles;
 }
 
-export let get_articles_query = async function(query) {
-    let url = build_query_url(query);
-    return await get_articles(url, pages=1);
-}
-
-export let process_url = async function (url) {
-    let articles = await get_articles(url, 1, false);
-    console.log(`Found ${articles.length} articles`);
-    return articles;
-};
-
-let create_html_report_file = async function (path) {
-    let settings = await read_json_file('settings.json');
-    
-    let stream = fs.createWriteStream(path, { flags: 'w', encoding: 'utf8' });
-    stream.write(HTML_HEAD);
-
-    async function proc(url) {
-        let articles = await process_url(url);
-        for (let article of articles) {
-            let html = article_to_html(article);
-            stream.write(html);
-        }
-    }
-
-    promises = [];
-    for (let url of settings.urls) {
-        promises.push(proc(url));
-    }
-    await Promise.all(promises);
-
-    stream.write('</body></html>');
-    stream.end()
+export let get_articles_query = async function(query_info) {
+    let url = query_info.build_url();
+    return await get_articles(url, pages=query_info.pages);
 }

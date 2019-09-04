@@ -21,12 +21,16 @@ export class QuerySectionsList extends Component {
     }
   }
 
-  _get_uid = () => {
+  _getUid = () => {
     let old = (this.state.sections.length > 0)
         ? (parseInt(this.state.sections[this.state.sections.length - 1].id) + 1)
         : (-1);
     this._uid = Math.max(this._uid + 1, old);
     return this._uid.toString();
+  }
+
+  _getSectionTitle = (queryInfo) => {
+    return queryInfo.query.toUpperCase();
   }
 
   async componentDidMount() {
@@ -82,13 +86,13 @@ export class QuerySectionsList extends Component {
   }
 
   _addQuerySection = (queryInfo) => {
-    let title = queryInfo.query;
+    let title = this._getSectionTitle(queryInfo);
     let new_sections = this.state.sections.slice();
     let idx = new_sections.findIndex(el => el.title === title);
     if (idx === -1) {
       new_sections.push({ 
         title: title, 
-        id: this._get_uid(),
+        id: this._getUid(),
         isLoading: false,
         queryInfo: queryInfo,
         data: []
@@ -103,7 +107,20 @@ export class QuerySectionsList extends Component {
     });
   }
 
-  _fetchArticlesQuery = async (sectionTitle) => {
+  _updateQuerySection = (queryInfo) => {
+    let sectionTitle = this._getSectionTitle(queryInfo);
+    this.setState(state => {
+      let sections = state.sections.slice();
+      let section = this.state.sections.find(el => el.title === sectionTitle);
+      section.queryInfo = queryInfo;
+      section.isLoading = false;
+      return { sections: sections };
+    })
+  }
+
+  _fetchArticlesQuery = async (queryInfo) => {
+    let sectionTitle = this._getSectionTitle(queryInfo);
+
     function updateSectionState(state, args) {
       let sections = state.sections.slice();
       let section = sections.find(el => el.title === sectionTitle);
@@ -120,7 +137,7 @@ export class QuerySectionsList extends Component {
 
     this.setState(state => updateSectionState(state, {isLoading: true}));
     
-    let articles = await bolha.get_articles_query(sectionTitle);
+    let articles = await bolha.get_articles_query(queryInfo);
 
     this.setState(state => updateSectionState(state, {isLoading: false, data: articles}));
   }
@@ -128,7 +145,7 @@ export class QuerySectionsList extends Component {
   _fetchAllArticles = async () => {    
     let promises = [];
     for (let section of this.state.sections) {
-      promises.push(this._fetchArticlesQuery(section.title));
+      promises.push(this._fetchArticlesQuery(section.queryInfo));
     }
     await Promise.all(promises);
   }
@@ -154,6 +171,7 @@ export class QuerySectionsList extends Component {
   _sectionRenderHeader = ({ section }) => (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionHeaderText}>{section.title.toUpperCase()}</Text>
+      <Text>{section.queryInfo.build_url()}</Text>
       {section.isLoading && <ActivityIndicator/>}
     </View>
   );
@@ -165,8 +183,9 @@ export class QuerySectionsList extends Component {
         <QueryBuilderList 
           sections={this.state.sections}
           queryAdded={this._addQuerySection}
-          queryTapped={this._jumpToSection}
-          queryRemoved={this._removeQuerySection}
+          queryRemoved={(queryInfo) => this._removeQuerySection(queryInfo.query)}
+          queryChanged={this._updateQuerySection}
+          queryTapped={(queryInfo) => this._jumpToSection(queryInfo.query)}
         />
 
         <Button

@@ -1,25 +1,26 @@
+import * as Bolha from './Bolha';
 import { InputDialog } from './InputDialog';
 
 import React, { Component } from 'react';
-import { Button, Text, View, FlatList, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { Button, Text, View, FlatList, TouchableOpacity, 
+  Animated, StyleSheet, Picker } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
 const Separator = () => <View style={styles.separator} />;
 
 class RowItem extends Component {
   /* props:
-    title
+    data
     onTap
     onDelete
-    onAdd 
   */
 
   _onTap = () => {
-    this.props.onTap(this.props.title);
+    this.props.onTap(this.props.data);
   }
 
   _onDeleteAction = () => {
-    this.props.onDelete(this.props.title);
+    this.props.onDelete(this.props.data);
   }
 
   _onSwipeLeft = (progress, dragX) => {
@@ -53,7 +54,7 @@ class RowItem extends Component {
       >
         <View style={styles.queryOption}>
           <TouchableOpacity onPress={this._onTap}>
-            <Text>{this.props.title}</Text>
+            {this.props.children}
           </TouchableOpacity>
         </View>
       </Swipeable>
@@ -61,9 +62,62 @@ class RowItem extends Component {
   }
 }
 
-export class QueryInfo {
-  constructor(query = '') {
-    this.query = query;
+class QueryInfoItem extends Component {
+  /* props:
+    queryInfo
+    onTap
+    onDelete
+    onChange
+  */
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      sortOption: "RECENT_FIRST"
+    };
+  }
+
+  _sortPickerValueChanged = (itemValue, itemIndex) => {
+    let queryInfo = this.props.queryInfo;
+    queryInfo.sort = Bolha.SORT_OPTIONS[itemValue];
+    this.props.onChange(queryInfo);
+
+    this.setState({ sortOption: itemValue });
+  } 
+
+  render() {
+    let queryInfo = this.props.queryInfo;
+    let sortItems = [];
+    for (let option in Bolha.SORT_OPTIONS) {
+      sortItems.push(
+        <Picker.Item 
+          label={Bolha.sort_option_to_string(option)} 
+          value={option}
+          key={option}
+        />
+      );
+    }
+
+    return (
+    <RowItem 
+      data={queryInfo}
+      onTap={this.props.onTap}
+      onDelete={this.props.onDelete}
+    >
+      <Text>Query: {queryInfo.query}</Text>
+
+      <Text>Sort by: </Text>
+      <Picker
+        selectedValue={this.state.sortOption}
+        onValueChange={this._sortPickerValueChanged}
+        prompt="Hello"  // Doesn't show?!?
+      >
+        {sortItems}
+      </Picker>
+
+    </RowItem>
+    );
   }
 }
 
@@ -85,9 +139,9 @@ export class QueryBuilderList extends Component {
   }
 
   _onQueryAdded = (queryText) => {
-    this.setState({ inputDialogVisible: false });
-    let query = new QueryInfo(queryText);
+    let query = new Bolha.QueryInfo({ query: queryText });
     this.props.queryAdded(query);
+    this.setState({ inputDialogVisible: false });
   }
 
   _inputDialogCancelled = () => {
@@ -95,12 +149,13 @@ export class QueryBuilderList extends Component {
   }
 
   _renderQueryInfo = ({ item }) => {
-    let queryInfo = item.queryInfo;
+    let queryInfo = item.queryInfo;  // section.[...]
     return (
-      <RowItem 
-        title={queryInfo.query}
+      <QueryInfoItem 
+        queryInfo={queryInfo}
         onDelete={this.props.queryRemoved}
         onTap={this.props.queryTapped}
+        onChange={this.props.queryChanged}
       />
     );
   }
