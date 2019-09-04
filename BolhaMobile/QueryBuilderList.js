@@ -74,7 +74,8 @@ class QueryInfoItem extends Component {
     super(props);
 
     this.state = {
-      sortOption: "RECENT_FIRST"
+      sortOption: "RECENT_FIRST",
+      dateOption: "ALL"
     };
   }
 
@@ -84,10 +85,17 @@ class QueryInfoItem extends Component {
     this.props.onChange(queryInfo);
 
     this.setState({ sortOption: itemValue });
-  } 
+  }
 
-  render() {
+  _datePickerValueChanged = (itemValue, itemIndex) => {
     let queryInfo = this.props.queryInfo;
+    queryInfo.date = Bolha.DATE_OPTIONS[itemValue];
+    this.props.onChange(queryInfo);
+
+    this.setState({ dateOption: itemValue });
+  }
+
+  _renderSortPicker = () => {
     let sortItems = [];
     for (let option in Bolha.SORT_OPTIONS) {
       sortItems.push(
@@ -100,6 +108,44 @@ class QueryInfoItem extends Component {
     }
 
     return (
+      <Picker
+        selectedValue={this.state.sortOption}
+        onValueChange={this._sortPickerValueChanged}
+        prompt="Hello"  // Doesn't show?!?
+      >
+        {sortItems}
+      </Picker>
+    );
+  }
+
+  _renderDatePicker = () => {
+    let dateItems = [];
+    for (let option in Bolha.DATE_OPTIONS) {
+      dateItems.push(
+        <Picker.Item 
+          label={Bolha.date_option_to_string(option)}
+          value={option}
+          key={option}
+        />
+      )
+    }
+
+    return (
+      <Picker
+        selectedValue={this.state.dateOption}
+        onValueChange={this._datePickerValueChanged}
+        prompt="Hello"
+      >
+        {dateItems}
+      </Picker>
+    );
+  }
+
+  render() {
+    let queryInfo = this.props.queryInfo;
+
+
+    return (
     <RowItem 
       data={queryInfo}
       onTap={this.props.onTap}
@@ -108,13 +154,10 @@ class QueryInfoItem extends Component {
       <Text>Query: {queryInfo.query}</Text>
 
       <Text>Sort by: </Text>
-      <Picker
-        selectedValue={this.state.sortOption}
-        onValueChange={this._sortPickerValueChanged}
-        prompt="Hello"  // Doesn't show?!?
-      >
-        {sortItems}
-      </Picker>
+      {this._renderSortPicker()}
+
+      <Text>Date posted: </Text>
+      {this._renderDatePicker()}
 
     </RowItem>
     );

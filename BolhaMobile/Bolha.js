@@ -5,7 +5,7 @@ const BOLHA_URL = 'http://www.bolha.com';
 const _QUERY_KEY = "iskanje?q";
 const _PRICE_SORT_KEY = "priceSortField";
 const _SORT_KEY = "sort";
-const _AGE_KEY = "datePlaced";
+const _DATE_KEY = "datePlaced";
 
 export const SORT_OPTIONS = {
     RELEVANT: 0,
@@ -15,7 +15,8 @@ export const SORT_OPTIONS = {
     PRICE_HIGHEST_FIRST: 4
 };
 
-export const AGE_OPTIONS = {
+export const DATE_OPTIONS = {
+    ALL: "$all$",
     LAST_8_HOURS: "V+zadnjih+8+urah",
     TODAY: "Danes",
     YESTERDAY: "V%C4%8Deraj",
@@ -34,7 +35,7 @@ export function sort_option_to_string(option) {
     }
 }
 
-export function age_option_to_string(option) {
+export function date_option_to_string(option) {
     switch (option) {
         case "LAST_8_HOURS": return "Last 8 hours";
         case "TODAY": return "Today";
@@ -42,6 +43,7 @@ export function age_option_to_string(option) {
         case "LAST_WEEK": return "Last week";
         case "LAST_MONTH": return "Last month";
         case "OLDER": return "Older";
+        case "ALL": return "All";
     }
 }
 
@@ -51,7 +53,7 @@ export class QueryInfo {
         this.price_min = info.price_min || -1;
         this.price_max = info.price_max || -1;
         this.sort = info.sort || SORT_OPTIONS.RECENT_FIRST;
-        this.age = info.age || null;
+        this.date = info.date || DATE_OPTIONS.ALL;
         this.pages = info.pages || 1;
     }
 
@@ -61,8 +63,11 @@ export class QueryInfo {
         if (this.price_min >= 0 && this.price_max >= 0) {
             q += `&${_PRICE_SORT_KEY}=${this.price_min}|${this.price_max}`;
         }
-        if (this.age) {
-            q += `&${_AGE_KEY}=${this.age}`;
+        // For all dates, omit the date ...
+        // NOTE: if the requested date is not listed, all options will
+        // be reset!
+        if (this.date !== DATE_OPTIONS.ALL) {
+            q += `&${_DATE_KEY}=${this.date}`;
         }
         return BOLHA_URL + q;
     }
