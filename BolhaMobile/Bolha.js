@@ -101,7 +101,7 @@ let get_articles_on_page = function ($, raw=false) {
 
     let articles = [];
     $('section#list div.ad').each((_, element) => {
-        let el = $(element).find($('div.price')).children().last();
+        let el = $(element).find($('div.price'));
         if (el.length == 0) return;  // skip articles without a price (ads ...)
         
         if (raw) {
@@ -140,11 +140,9 @@ export let get_articles = async function (url, pages=-1, raw=false) {
     console.log('Fetching page 1 ...');
     const $ = await fetch_page(url, 1);
     let page_count = get_page_count($);
-    let page_end = pages <= 0 ? page_count : Math.min(page_count, pages)
+    let page_end = (pages <= 0) ? page_count : Math.min(page_count, pages);
 
     let articles = get_articles_on_page($, raw);
-
-    console.log(articles);
 
     async function fetch_and_parse_page(page) {
         console.log(`Fetching page ${page} ...`);

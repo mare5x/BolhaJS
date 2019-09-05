@@ -101,7 +101,8 @@ export class QuerySectionsList extends Component {
     this.setState({ sections: new_sections });
   }
 
-  _removeQuerySection = (sectionTitle) => {
+  _removeQuerySection = (queryInfo) => {
+    let sectionTitle = this._getSectionTitle(queryInfo);
     this.setState(state => {
       return { sections: state.sections.filter(section => section.title !== sectionTitle) };
     });
@@ -183,7 +184,7 @@ export class QuerySectionsList extends Component {
         <QueryBuilderList 
           sections={this.state.sections}
           queryAdded={this._addQuerySection}
-          queryRemoved={(queryInfo) => this._removeQuerySection(queryInfo.query)}
+          queryRemoved={this._removeQuerySection}
           queryChanged={this._updateQuerySection}
           queryTapped={(queryInfo) => this._jumpToSection(queryInfo.query)}
         />

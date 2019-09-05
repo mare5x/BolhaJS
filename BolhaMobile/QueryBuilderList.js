@@ -4,7 +4,9 @@ import { InputDialog } from './InputDialog';
 import React, { Component } from 'react';
 import { Button, Text, View, FlatList, TouchableOpacity, 
   Animated, StyleSheet, Picker } from 'react-native';
+import Slider from '@react-native-community/slider';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+
 
 const Separator = () => <View style={styles.separator} />;
 
@@ -73,26 +75,41 @@ class QueryInfoItem extends Component {
   constructor(props) {
     super(props);
 
+    this._MAX_PAGES_VALUE = 10;
+
     this.state = {
       sortOption: "RECENT_FIRST",
-      dateOption: "ALL"
+      dateOption: "ALL",
+      pagesValue: 1
     };
   }
 
-  _sortPickerValueChanged = (itemValue, itemIndex) => {
+  _queryChanged = (params) => {
     let queryInfo = this.props.queryInfo;
-    queryInfo.sort = Bolha.SORT_OPTIONS[itemValue];
+    for (let opt in params) {
+      queryInfo[opt] = params[opt];
+    }
     this.props.onChange(queryInfo);
+  }
 
+  _sortPickerValueChanged = (itemValue, itemIndex) => {
+    this._queryChanged({ sort: Bolha.SORT_OPTIONS[itemValue] });
     this.setState({ sortOption: itemValue });
   }
 
   _datePickerValueChanged = (itemValue, itemIndex) => {
-    let queryInfo = this.props.queryInfo;
-    queryInfo.date = Bolha.DATE_OPTIONS[itemValue];
-    this.props.onChange(queryInfo);
-
+    this._queryChanged({ date: Bolha.DATE_OPTIONS[itemValue] });
     this.setState({ dateOption: itemValue });
+  }
+
+  _pageValueChanged = (value) => {
+    this.setState({ pagesValue: value });
+  }
+
+  _pageValueComplete = (value) => {
+    // -1 for all pages
+    value = (value >= this._MAX_PAGES_VALUE) ? -1 : value;
+    this._queryChanged({ pages: value });
   }
 
   _renderSortPicker = () => {
@@ -141,9 +158,22 @@ class QueryInfoItem extends Component {
     );
   }
 
+  _renderPageSlider = () => {
+    return (
+      <Slider 
+        step={1}
+        minimumValue={1}
+        maximumValue={this._MAX_PAGES_VALUE}
+        onValueChange={this._pageValueChanged}
+        onSlidingComplete={this._pageValueComplete}
+      />
+    );
+  }
+
   render() {
     let queryInfo = this.props.queryInfo;
-
+    let pages = (this.state.pagesValue >= this._MAX_PAGES_VALUE)
+      ? "ALL" : this.state.pagesValue;
 
     return (
     <RowItem 
@@ -151,13 +181,16 @@ class QueryInfoItem extends Component {
       onTap={this.props.onTap}
       onDelete={this.props.onDelete}
     >
-      <Text>Query: {queryInfo.query}</Text>
+      <Text>Query: <Text style={{fontSize: 18, fontWeight: 'bold'}}>{queryInfo.query}</Text></Text>
 
       <Text>Sort by: </Text>
       {this._renderSortPicker()}
 
       <Text>Date posted: </Text>
       {this._renderDatePicker()}
+
+      <Text>Pages: {pages}</Text>
+      {this._renderPageSlider()}
 
     </RowItem>
     );
