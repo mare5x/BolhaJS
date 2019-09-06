@@ -57,6 +57,7 @@ export class QueryInfo {
         this.sort = info.sort || SORT_OPTIONS.RECENT_FIRST;
         this.date = info.date || DATE_OPTIONS.ALL;
         this.pages = info.pages || 1;
+        this.enabled = info.hasOwnProperty('enabled') ? info.enabled : true;  // Convenience attribute.
     }
 
     build_url = () => {

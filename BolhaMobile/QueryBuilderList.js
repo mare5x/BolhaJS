@@ -3,66 +3,13 @@ import { InputDialog } from './InputDialog';
 
 import React, { Component } from 'react';
 import { Button, Text, View, FlatList, TouchableOpacity, 
-  Animated, StyleSheet, Picker, TextInput } from 'react-native';
+  Animated, StyleSheet, Picker, TextInput, Switch } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
 
 const Separator = () => <View style={styles.separator} />;
 
-class RowItem extends Component {
-  /* props:
-    data
-    onTap
-    onDelete
-  */
-
-  _onTap = () => {
-    this.props.onTap(this.props.data);
-  }
-
-  _onDeleteAction = () => {
-    this.props.onDelete(this.props.data);
-  }
-
-  _onSwipeLeft = (progress, dragX) => {
-    const scale = dragX.interpolate({
-      inputRange: [0, 100],
-      outputRange: [0.5, 1],
-      extrapolate: 'clamp'
-    });
-
-    return (
-      <View style={styles.queryOptionDeleteSwipe}>
-        <TouchableOpacity onPress={this._onDeleteAction}>
-          <Animated.Text 
-            style={[
-              styles.queryOptionDeleteSwipeText,
-              { 
-                transform: [{ scale }]
-              }]
-            }>
-            Delete
-          </Animated.Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  render() {
-    return (
-      <Swipeable
-        renderLeftActions={this._onSwipeLeft}
-      >
-        <View style={styles.queryOption}>
-          <TouchableOpacity onPress={this._onTap}>
-            {this.props.children}
-          </TouchableOpacity>
-        </View>
-      </Swipeable>
-    );
-  }
-}
 
 class QueryInfoItem extends Component {
   /* props:
@@ -78,7 +25,7 @@ class QueryInfoItem extends Component {
     this._MAX_PAGES_VALUE = 10;
 
     const queryInfo = props.queryInfo;
-    const { price_min, price_max, sort, date, pages } = queryInfo;
+    const { price_min, price_max, sort, date, pages, enabled } = queryInfo;
     const initialPages = (pages < 0) 
       ? this._MAX_PAGES_VALUE : pages;
 
@@ -87,7 +34,8 @@ class QueryInfoItem extends Component {
       dateOption: date,
       pagesValue: initialPages,
       priceMin: price_min,
-      priceMax: price_max
+      priceMax: price_max,
+      enabled: enabled
     };
   }
 
@@ -131,6 +79,15 @@ class QueryInfoItem extends Component {
     let price = text ? Math.max(this.state.priceMin, parseInt(text)) : -1;
     this._queryChanged({ price_max: price });
     this.setState({ priceMax: price });
+  }
+
+  _enabledChanged = (value) => {
+    this._queryChanged({ enabled: value });
+    this.setState({ enabled: value });
+  }
+
+  _onDeleteAction = () => {
+    this.props.onDelete(this.props.queryInfo);
   }
 
   _renderSortPicker = () => {
@@ -181,6 +138,56 @@ class QueryInfoItem extends Component {
     );
   }
 
+  _onSwipeLeft = (progress, dragX) => {
+    const scale = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [0.5, 1],
+      extrapolate: 'clamp'
+    });
+
+    return (
+      <View style={styles.queryOptionDeleteSwipe}>
+        <TouchableOpacity onPress={this._onDeleteAction}>
+          <Animated.Text 
+            style={[
+              styles.queryOptionDeleteSwipeText,
+              { 
+                transform: [{ scale }]
+              }]
+            }>
+            Delete
+          </Animated.Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  _onSwipeRight = (progress, dragX) => {
+    const scale = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [1, 0.5],
+      extrapolate: 'clamp'
+    });
+
+    return (
+      <View style={styles.queryOptionToggleSwipe}>
+        <Animated.Text 
+          style={[
+            styles.queryOptionToggleSwipeText,
+            { 
+              transform: [{ scale }]
+            }]
+          }>
+          Enabled: 
+        </Animated.Text>
+        <Switch 
+        onValueChange={this._enabledChanged}
+        value={this.state.enabled}
+        />
+      </View>
+    );
+  }
+
   _PageSlider = (props) => {
     return (
       <Slider 
@@ -206,6 +213,7 @@ class QueryInfoItem extends Component {
 
   render() {
     const queryInfo = this.props.queryInfo;
+    const queryColorStyle = { color: this.state.enabled ? 'green' : 'red' };
     const pages = (this.state.pagesValue >= this._MAX_PAGES_VALUE)
       ? "ALL" : this.state.pagesValue;
     const priceMin = Math.max(this.state.priceMin, 0).toString();
@@ -213,41 +221,46 @@ class QueryInfoItem extends Component {
       ? this.state.priceMax.toString() : "∞";
 
     return (
-    <RowItem 
-      data={queryInfo}
-      onTap={this.props.onTap}
-      onDelete={this.props.onDelete}
+    <Swipeable
+      renderLeftActions={this._onSwipeLeft}
+      renderRightActions={this._onSwipeRight}
     >
-      <Text>Query: <Text style={{fontSize: 18, fontWeight: 'bold'}}>{queryInfo.query}</Text></Text>
+      <View style={styles.queryOption}>
+        <TouchableOpacity onPress={() => this.props.onTap(queryInfo)}>
+          <Text>Query: 
+            <Text style={[styles.queryText, queryColorStyle]}>  {queryInfo.query}</Text>
+          </Text>
+        </TouchableOpacity>
 
-      <Text>Sort by: </Text>
-      {this._renderSortPicker()}
+        <Text>Sort by: </Text>
+        {this._renderSortPicker()}
 
-      <Text>Date posted: </Text>
-      {this._renderDatePicker()}
+        <Text>Date posted: </Text>
+        {this._renderDatePicker()}
 
-      <Text>Price in €:</Text>
-      <View style={styles.priceView}>
-        <Text>From </Text>
-        <this._PriceInput 
-          placeholder={priceMin} 
-          onSubmitEditing={this._priceMinInputComplete}
-        />
+        <Text>Price in €:</Text>
+        <View style={styles.priceView}>
+          <Text>From </Text>
+          <this._PriceInput 
+            placeholder={priceMin} 
+            onSubmitEditing={this._priceMinInputComplete}
+          />
 
-        <Text>to </Text>
-        <this._PriceInput 
-          placeholder={priceMax}
-          onSubmitEditing={this._priceMaxInputComplete}
-        />
+          <Text>to </Text>
+          <this._PriceInput 
+            placeholder={priceMax}
+            onSubmitEditing={this._priceMaxInputComplete}
+          />
+        </View>
+
+        <Text>Pages: {pages}</Text>
+        <this._PageSlider value={this.state.pagesValue}/>
       </View>
-
-      <Text>Pages: {pages}</Text>
-      <this._PageSlider value={this.state.pagesValue}/>
-
-    </RowItem>
+    </Swipeable>
     );
   }
 }
+
 
 export class QueryBuilderList extends Component {
   /* props:
@@ -312,6 +325,7 @@ export class QueryBuilderList extends Component {
   }
 }
 
+
 const styles = StyleSheet.create({
   separator: {
     flex: 1,
@@ -325,6 +339,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff"  // Weird overlap issue if this isn't set!
   },
 
+  queryText: {
+    fontSize: 18, 
+    fontWeight: 'bold'
+  },
+
   queryOptionDeleteSwipe: {
     justifyContent: "center",
     backgroundColor: "red",
@@ -333,6 +352,19 @@ const styles = StyleSheet.create({
 
   queryOptionDeleteSwipeText: {
     color: "white",
+    fontWeight: '600',
+    padding: 20
+  },
+
+  queryOptionToggleSwipe: {
+    justifyContent: "center",
+    alignItems: "flex-end",
+    backgroundColor: "rgba(240, 240, 240, 0.5)",
+    padding: 10
+  },
+
+  queryOptionToggleSwipeText: {
+    color: "black",
     fontWeight: '600',
     padding: 20
   },

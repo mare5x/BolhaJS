@@ -74,14 +74,15 @@ export class QuerySectionsList extends Component {
     await AsyncStorage.setItem("@sections", sections);
   }
 
-  _jumpToSection = (sectionTitle) => {
-    let section_index = this.state.sections.findIndex(el => el.title === sectionTitle);
+  _jumpToSection = (queryInfo) => {
+    const title = this._getSectionTitle(queryInfo);
+    let section_index = this.state.sections.findIndex(el => el.title === title);
     this._sectionListRef.scrollToLocation({ sectionIndex: section_index, itemIndex: 0 });
   }
 
   _jumpToTop = () => {
     if (this.state.sections.length > 0) {
-      this._jumpToSection(this.state.sections[0].title);
+      this._jumpToSection(this.state.sections[0].queryInfo);
     }
   }
 
@@ -130,6 +131,10 @@ export class QuerySectionsList extends Component {
   }
 
   _fetchArticlesQuery = async (queryInfo) => {
+    if (!queryInfo.enabled) {
+      return null;
+    }
+    
     let sectionTitle = this._getSectionTitle(queryInfo);
 
     function updateSectionState(state, args) {
@@ -179,13 +184,29 @@ export class QuerySectionsList extends Component {
     );
   }
 
-  _sectionRenderHeader = ({ section }) => (
+  _sectionRenderHeader = ({ section }) => {
+    const queryInfo = section.queryInfo;
+    const title = this._getSectionTitle(queryInfo);
+    const isLoading = section.isLoading;
+
+    const titleColorStyle = { color: 
+      queryInfo.enabled 
+        ? (isLoading 
+          ? 'blue'
+          : 'green')
+        : 'grey'
+    };
+
+    const isLoadingComp = isLoading ? <ActivityIndicator /> : null;
+
+    return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{section.title.toUpperCase()}</Text>
-      <Text>{section.queryInfo.build_url()}</Text>
-      {section.isLoading && <ActivityIndicator/>}
+      <Text style={[styles.sectionHeaderText, titleColorStyle]}>{title}</Text>
+      <Text>{queryInfo.build_url()}</Text>
+      {isLoadingComp}
     </View>
-  );
+    );
+  }
 
   render() {
     // WIthout the flex: 1, the list is cut off!
@@ -197,7 +218,7 @@ export class QuerySectionsList extends Component {
           queryAdded={this._addQuerySection}
           queryRemoved={this._removeQuerySection}
           queryChanged={this._updateQuerySection}
-          queryTapped={(queryInfo) => this._jumpToSection(queryInfo.query)}
+          queryTapped={this._jumpToSection}
         />
 
         <Button
