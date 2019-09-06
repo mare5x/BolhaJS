@@ -3,7 +3,7 @@ import { InputDialog } from './InputDialog';
 
 import React, { Component } from 'react';
 import { Button, Text, View, FlatList, TouchableOpacity, 
-  Animated, StyleSheet, Picker } from 'react-native';
+  Animated, StyleSheet, Picker, TextInput } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -77,10 +77,17 @@ class QueryInfoItem extends Component {
 
     this._MAX_PAGES_VALUE = 10;
 
+    const queryInfo = props.queryInfo;
+    const { price_min, price_max, sort, date, pages } = queryInfo;
+    const initialPages = (pages < 0) 
+      ? this._MAX_PAGES_VALUE : pages;
+
     this.state = {
-      sortOption: "RECENT_FIRST",
-      dateOption: "ALL",
-      pagesValue: 1
+      sortOption: sort,
+      dateOption: date,
+      pagesValue: initialPages,
+      priceMin: price_min,
+      priceMax: price_max
     };
   }
 
@@ -93,12 +100,12 @@ class QueryInfoItem extends Component {
   }
 
   _sortPickerValueChanged = (itemValue, itemIndex) => {
-    this._queryChanged({ sort: Bolha.SORT_OPTIONS[itemValue] });
+    this._queryChanged({ sort: itemValue });
     this.setState({ sortOption: itemValue });
   }
 
   _datePickerValueChanged = (itemValue, itemIndex) => {
-    this._queryChanged({ date: Bolha.DATE_OPTIONS[itemValue] });
+    this._queryChanged({ date: itemValue });
     this.setState({ dateOption: itemValue });
   }
 
@@ -112,13 +119,28 @@ class QueryInfoItem extends Component {
     this._queryChanged({ pages: value });
   }
 
+  _priceMinInputComplete = (event) => {
+    let text = event.nativeEvent.text;
+    let price = text ? Math.max(0, parseInt(text)) : 0;
+    this._queryChanged({ price_min: price });
+    this.setState({ priceMin: price });
+  }
+
+  _priceMaxInputComplete = (event) => {
+    let text = event.nativeEvent.text;
+    let price = text ? Math.max(this.state.priceMin, parseInt(text)) : -1;
+    this._queryChanged({ price_max: price });
+    this.setState({ priceMax: price });
+  }
+
   _renderSortPicker = () => {
     let sortItems = [];
     for (let option in Bolha.SORT_OPTIONS) {
+      let val = Bolha.SORT_OPTIONS[option];
       sortItems.push(
         <Picker.Item 
-          label={Bolha.sort_option_to_string(option)} 
-          value={option}
+          label={Bolha.sort_option_to_string(val)} 
+          value={val}
           key={option}
         />
       );
@@ -138,10 +160,11 @@ class QueryInfoItem extends Component {
   _renderDatePicker = () => {
     let dateItems = [];
     for (let option in Bolha.DATE_OPTIONS) {
+      let val = Bolha.DATE_OPTIONS[option];
       dateItems.push(
         <Picker.Item 
-          label={Bolha.date_option_to_string(option)}
-          value={option}
+          label={Bolha.date_option_to_string(val)}
+          value={val}
           key={option}
         />
       )
@@ -158,9 +181,10 @@ class QueryInfoItem extends Component {
     );
   }
 
-  _renderPageSlider = () => {
+  _PageSlider = (props) => {
     return (
       <Slider 
+        {...props}
         step={1}
         minimumValue={1}
         maximumValue={this._MAX_PAGES_VALUE}
@@ -170,10 +194,23 @@ class QueryInfoItem extends Component {
     );
   }
 
+  _PriceInput = (props) => {
+    return (
+      <TextInput 
+        {...props}
+        style={styles.priceInput}
+        keyboardType="numeric"
+      />
+    );
+  }
+
   render() {
-    let queryInfo = this.props.queryInfo;
-    let pages = (this.state.pagesValue >= this._MAX_PAGES_VALUE)
+    const queryInfo = this.props.queryInfo;
+    const pages = (this.state.pagesValue >= this._MAX_PAGES_VALUE)
       ? "ALL" : this.state.pagesValue;
+    const priceMin = Math.max(this.state.priceMin, 0).toString();
+    const priceMax = (this.state.priceMax >= 0)
+      ? this.state.priceMax.toString() : "∞";
 
     return (
     <RowItem 
@@ -189,8 +226,23 @@ class QueryInfoItem extends Component {
       <Text>Date posted: </Text>
       {this._renderDatePicker()}
 
+      <Text>Price in €:</Text>
+      <View style={styles.priceView}>
+        <Text>From </Text>
+        <this._PriceInput 
+          placeholder={priceMin} 
+          onSubmitEditing={this._priceMinInputComplete}
+        />
+
+        <Text>to </Text>
+        <this._PriceInput 
+          placeholder={priceMax}
+          onSubmitEditing={this._priceMaxInputComplete}
+        />
+      </View>
+
       <Text>Pages: {pages}</Text>
-      {this._renderPageSlider()}
+      <this._PageSlider value={this.state.pagesValue}/>
 
     </RowItem>
     );
@@ -238,7 +290,7 @@ export class QueryBuilderList extends Component {
 
   render() {
     return (
-      <View>
+      <View style={this.props.style}>
         <InputDialog 
           visible={this.state.inputDialogVisible}
           onConfirm={this._onQueryAdded}
@@ -283,5 +335,25 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: '600',
     padding: 20
+  },
+
+  priceView: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    backgroundColor: 'rgba(22, 22, 220, 0.5)',
+    borderRadius: 10,
+    alignItems: 'center'
+  },
+
+  priceInput: {
+    borderRadius: 5,
+    backgroundColor: "rgba(200, 200, 200, 0.5)",
+    // marginLeft: 20,
+    margin: 5,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingTop: 2,
+    paddingBottom: 2,
+    maxWidth: '33%'
   }
 });

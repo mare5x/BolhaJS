@@ -1,4 +1,4 @@
-import * as bolha from './Bolha';
+import * as Bolha from './Bolha';
 import { QueryBuilderList } from './QueryBuilderList';
 
 import React, { Component } from 'react';
@@ -50,10 +50,20 @@ export class QuerySectionsList extends Component {
   }
 
   _loadSections = async () => {
-    let sections = await AsyncStorage.getItem("@sections");
-    console.log("Read sections: ", sections);
-    if (sections) {
-      sections = JSON.parse(sections);
+    let raw_sections = await AsyncStorage.getItem("@sections");
+    console.log("Read sections: ", raw_sections);
+    if (raw_sections) {
+      raw_sections = JSON.parse(raw_sections);
+      let sections = [];
+      for (let raw_section of raw_sections) {
+        let section = {};
+        section.title = raw_section.title;
+        section.id = raw_section.id;
+        section.isLoading = false;
+        section.queryInfo = new Bolha.QueryInfo(raw_section.queryInfo);
+        section.data = raw_section.data;
+        sections.push(section);
+      }
       this.setState({ sections: sections });
     }
   }
@@ -138,7 +148,7 @@ export class QuerySectionsList extends Component {
 
     this.setState(state => updateSectionState(state, {isLoading: true}));
     
-    let articles = await bolha.get_articles_query(queryInfo);
+    let articles = await Bolha.get_articles_query(queryInfo);
 
     this.setState(state => updateSectionState(state, {isLoading: false, data: articles}));
   }
@@ -182,6 +192,7 @@ export class QuerySectionsList extends Component {
     return (
       <View style={{flex: 1}}>  
         <QueryBuilderList 
+          style={{maxHeight: '50%'}}
           sections={this.state.sections}
           queryAdded={this._addQuerySection}
           queryRemoved={this._removeQuerySection}

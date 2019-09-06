@@ -7,6 +7,8 @@ const _PRICE_SORT_KEY = "priceSortField";
 const _SORT_KEY = "sort";
 const _DATE_KEY = "datePlaced";
 
+const _MAX_PRICE = (1 << 30);
+
 export const SORT_OPTIONS = {
     RELEVANT: 0,
     RECENT_FIRST: 1,
@@ -27,31 +29,31 @@ export const DATE_OPTIONS = {
 
 export function sort_option_to_string(option) {
     switch (option) {
-        case "RELEVANT": return "Most relevant";
-        case "RECENT_FIRST": return "Recent first";
-        case "DUE_FOR_EXPIRATION": return "Due for expiration";
-        case "PRICE_LOWEST_FIRST": return "Price: lowest first";
-        case "PRICE_HIGHEST_FIRST": return "Price: highest first";
+        case 0: return "Most relevant";
+        case 1: return "Recent first";
+        case 2: return "Due for expiration";
+        case 3: return "Price: lowest first";
+        case 4: return "Price: highest first";
     }
 }
 
 export function date_option_to_string(option) {
     switch (option) {
-        case "LAST_8_HOURS": return "Last 8 hours";
-        case "TODAY": return "Today";
-        case "YESTERDAY": return "Yesterday";
-        case "LAST_WEEK": return "Last week";
-        case "LAST_MONTH": return "Last month";
-        case "OLDER": return "Older";
-        case "ALL": return "All";
+        case "V+zadnjih+8+urah": return "Last 8 hours";
+        case "Danes": return "Today";
+        case "V%C4%8Deraj": return "Yesterday";
+        case "Zadnji+teden": return "Last week";
+        case "Zadnji+mesec": return "Last month";
+        case "Starej%C5%A1i+oglasi": return "Older";
+        case "$all$": return "All";
     }
 }
 
 export class QueryInfo {
     constructor(info) {
         this.query = info.query || '';
-        this.price_min = info.price_min || -1;
-        this.price_max = info.price_max || -1;
+        this.price_min = info.price_min || 0;
+        this.price_max = info.price_max || -1;  // -1 is Infinity
         this.sort = info.sort || SORT_OPTIONS.RECENT_FIRST;
         this.date = info.date || DATE_OPTIONS.ALL;
         this.pages = info.pages || 1;
@@ -60,8 +62,10 @@ export class QueryInfo {
     build_url = () => {
         let q = `/${_QUERY_KEY}=${this.query}`;
         q += `&${_SORT_KEY}=${this.sort}`;
-        if (this.price_min >= 0 && this.price_max >= 0) {
-            q += `&${_PRICE_SORT_KEY}=${this.price_min}|${this.price_max}`;
+
+        if (this.price_min > 0 || this.price_max > 0) {
+            let price_max = this.price_max < 0 ? _MAX_PRICE : this.price_max;
+            q += `&${_PRICE_SORT_KEY}=${this.price_min}|${price_max}`;
         }
         // For all dates, omit the date ...
         // NOTE: if the requested date is not listed, all options will
