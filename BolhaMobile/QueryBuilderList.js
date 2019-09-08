@@ -264,7 +264,7 @@ class QueryInfoItem extends Component {
 
 export class QueryBuilderList extends Component {
   /* props:
-    sections : [{queryInfo: QueryInfo ...}]
+    queries : [{queryInfo: QueryInfo ...}]
     queryAdded
     queryChanged
     queryRemoved
@@ -311,7 +311,7 @@ export class QueryBuilderList extends Component {
         />
 
         <FlatList
-          data={this.props.sections}
+          data={this.props.queries}
           renderItem={this._renderQueryInfo}
           ItemSeparatorComponent={Separator}
         />
