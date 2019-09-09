@@ -73,9 +73,14 @@ export class QuerySectionsList extends Component {
 
     return (
     <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionHeaderText, titleColorStyle]}>{title}</Text>
+      <View style={{
+         flexDirection: "row", 
+         justifyContent: "space-around" 
+      }}>
+        <Text style={[styles.sectionHeaderText, titleColorStyle]}>{title}</Text>
+        {isLoadingComp}
+      </View>
       <Text>{queryInfo.build_url()}</Text>
-      {isLoadingComp}
     </View>
     );
   }
@@ -107,8 +112,8 @@ const styles = StyleSheet.create({
       paddingBottom: 2,
       backgroundColor: 'rgba(247,247,247,1.0)',
       flex: 1,
-      flexDirection: "row", 
-      justifyContent: "space-around",
+      // flexDirection: "row", 
+      // justifyContent: "space-around",
     },
   
     sectionHeaderText: {

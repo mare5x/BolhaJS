@@ -243,13 +243,13 @@ class QueryInfoItem extends Component {
           <Text>From </Text>
           <this._PriceInput 
             placeholder={priceMin} 
-            onSubmitEditing={this._priceMinInputComplete}
+            onEndEditing={this._priceMinInputComplete}
           />
 
           <Text>to </Text>
           <this._PriceInput 
             placeholder={priceMax}
-            onSubmitEditing={this._priceMaxInputComplete}
+            onEndEditing={this._priceMaxInputComplete}
           />
         </View>
 
