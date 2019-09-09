@@ -2,8 +2,19 @@ import * as Bolha from './Bolha';
 import { InputDialog } from './InputDialog';
 
 import React, { Component } from 'react';
-import { Button, Text, View, FlatList, TouchableOpacity, 
-  Animated, StyleSheet, Picker, TextInput, Switch } from 'react-native';
+import { 
+  Button,
+  Text,
+  View, 
+  FlatList, 
+  TouchableOpacity, 
+  Animated, 
+  StyleSheet, 
+  Picker, 
+  TextInput, 
+  Switch,
+  Dimensions
+} from 'react-native';
 import Slider from '@react-native-community/slider';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -138,10 +149,10 @@ class QueryInfoItem extends Component {
     );
   }
 
-  _onSwipeLeft = (progress, dragX) => {
+  _onSwipeRight = (progress, dragX) => {
     const scale = dragX.interpolate({
-      inputRange: [0, 100],
-      outputRange: [0.5, 1],
+      inputRange: [-100, 0],
+      outputRange: [1, 0.5],
       extrapolate: 'clamp'
     });
 
@@ -158,32 +169,6 @@ class QueryInfoItem extends Component {
             Delete
           </Animated.Text>
         </TouchableOpacity>
-      </View>
-    );
-  }
-
-  _onSwipeRight = (progress, dragX) => {
-    const scale = dragX.interpolate({
-      inputRange: [-100, 0],
-      outputRange: [1, 0.5],
-      extrapolate: 'clamp'
-    });
-
-    return (
-      <View style={styles.queryOptionToggleSwipe}>
-        <Animated.Text 
-          style={[
-            styles.queryOptionToggleSwipeText,
-            { 
-              transform: [{ scale }]
-            }]
-          }>
-          Enabled: 
-        </Animated.Text>
-        <Switch 
-        onValueChange={this._enabledChanged}
-        value={this.state.enabled}
-        />
       </View>
     );
   }
@@ -219,18 +204,33 @@ class QueryInfoItem extends Component {
     const priceMin = Math.max(this.state.priceMin, 0).toString();
     const priceMax = (this.state.priceMax >= 0)
       ? this.state.priceMax.toString() : "∞";
+    const { width } = Dimensions.get('window');
 
     return (
     <Swipeable
-      renderLeftActions={this._onSwipeLeft}
       renderRightActions={this._onSwipeRight}
+      // Swipeable passes props to the underlying PanGestureHandler
+      // (see Swipeable.js source code).
+      // This allows us to set the gesture handler's props directly.
+      // Doing this will make the pan handler activate only within
+      // the specified region. 
+      // Without this, it would accept all pan events, 
+      // intruding with the TabView scrolling!
+      hitSlop={{ left: -Math.floor(width * 0.3) }}
     >
       <View style={styles.queryOption}>
-        <TouchableOpacity onPress={() => this.props.onTap(queryInfo)}>
-          <Text>Query: 
-            <Text style={[styles.queryText, queryColorStyle]}>  {queryInfo.query}</Text>
-          </Text>
-        </TouchableOpacity>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          <TouchableOpacity onPress={() => this.props.onTap(queryInfo)}>
+            <Text>Query: 
+              <Text style={[styles.queryText, queryColorStyle]}>  {queryInfo.query}</Text>
+            </Text>
+          </TouchableOpacity>
+
+          <Switch 
+            onValueChange={this._enabledChanged}
+            value={this.state.enabled}
+            />
+        </View>
 
         <Text>Sort by: </Text>
         {this._renderSortPicker()}
