@@ -96,8 +96,18 @@ let fetch_page = async function (url, page) {
 };
 
 let get_page_count = function ($) {
-    let el = $('div.pager a.last');
-    return el.length > 0 ? parseInt(el.first().text()) : 1;
+    const page_regex = /page=(\d+)/;
+
+    // Find the maximum hreff-ed page in the pager.
+    let max_page = 1;
+    $('div.pager a[href]').each((_, element) => {
+        let href = $(element).first().attr('href');
+        let match = href.match(page_regex);
+        if (match) {
+            max_page = Math.max(max_page, parseInt(match[1]));
+        }
+    })
+    return max_page;
 };
 
 let get_articles_on_page = function ($, raw=false) {
