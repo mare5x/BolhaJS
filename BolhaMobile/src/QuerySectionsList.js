@@ -1,3 +1,5 @@
+import { JumpButton } from './Buttons';
+
 import React, { Component } from 'react';
 import { 
   Text, 
@@ -6,8 +8,7 @@ import {
   Linking, 
   SectionList, 
   StyleSheet, 
-  ActivityIndicator, 
-  TouchableOpacity 
+  ActivityIndicator
 } from 'react-native';
 
 
@@ -29,13 +30,7 @@ export class QuerySectionsList extends Component {
   }
 
   _jumpToTopButton = () => {
-    return (
-      <TouchableOpacity onPress={this._jumpToTop}>
-        <Text>
-          To top
-        </Text>
-      </TouchableOpacity>
-    );
+    return JumpButton(this._jumpToTop);
   }
 
   _sectionRenderItem = ({ item, index, section }) => {
@@ -94,6 +89,7 @@ export class QuerySectionsList extends Component {
         renderSectionHeader={this._sectionRenderHeader}
         contentContainerStyle={styles.sectionListItem}
         ListFooterComponent={this._jumpToTopButton}
+        ListFooterComponentStyle={styles.footerStyle}
         ref={component => {
           this._sectionListRef = component;
           this.props.setSectionListRef(component)
@@ -103,6 +99,7 @@ export class QuerySectionsList extends Component {
     );
   }
 }
+
 
 const styles = StyleSheet.create({
     sectionHeader: {
@@ -131,5 +128,15 @@ const styles = StyleSheet.create({
       width: 210,  // Thumbnails are 210x210 px site wide
       height: 210,
       resizeMode: 'contain'
+    },
+
+    footerStyle: {
+      // Create empty space at the end of the list,
+      // so that the list can be scrolled more and
+      // the floating button won't cover anything.
+      minHeight: 80,
+      minWidth: 80,
+      padding: 5,
+      flexDirection: 'column-reverse'
     }
   });

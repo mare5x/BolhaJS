@@ -1,9 +1,8 @@
 import * as Bolha from './Bolha';
-import { InputDialog } from './InputDialog';
+import { JumpButton } from './Buttons';
 
 import React, { Component } from 'react';
 import { 
-  Button,
   Text,
   View, 
   FlatList, 
@@ -265,7 +264,6 @@ class QueryInfoItem extends Component {
 export class QueryBuilderList extends Component {
   /* props:
     queries : [{queryInfo: QueryInfo ...}]
-    queryAdded
     queryChanged
     queryRemoved
     queryTapped
@@ -274,19 +272,7 @@ export class QueryBuilderList extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      inputDialogVisible: false
-    }
-  }
-
-  _onQueryAdded = (queryText) => {
-    let query = new Bolha.QueryInfo({ query: queryText });
-    this.props.queryAdded(query);
-    this.setState({ inputDialogVisible: false });
-  }
-
-  _inputDialogCancelled = () => {
-    this.setState({ inputDialogVisible: false });
+    this._listRef = null;
   }
 
   _renderQueryInfo = ({ item }) => {
@@ -301,26 +287,26 @@ export class QueryBuilderList extends Component {
     );
   }
 
+  _jumpToTop = () => {
+    if (this.props.queries.length > 0) {
+      this._listRef.scrollToIndex({ index: 0 });
+    }
+  }
+
+  _jumpToTopButton = () => {
+    return JumpButton(this._jumpToTop);
+  }
+
   render() {
     return (
-      <View style={this.props.style}>
-        <InputDialog 
-          visible={this.state.inputDialogVisible}
-          onConfirm={this._onQueryAdded}
-          onCancel={this._inputDialogCancelled}
-        />
-
-        <FlatList
-          data={this.props.queries}
-          renderItem={this._renderQueryInfo}
-          ItemSeparatorComponent={Separator}
-        />
-        
-        <Button 
-          onPress={() => this.setState({ inputDialogVisible: true })}
-          title="Add query"
-        />
-      </View>
+      <FlatList
+        data={this.props.queries}
+        renderItem={this._renderQueryInfo}
+        ItemSeparatorComponent={Separator}
+        ListFooterComponent={this._jumpToTopButton}
+        ListFooterComponentStyle={styles.footerStyle}
+        ref={component => this._listRef = component}
+      />
     );
   }
 }
@@ -356,19 +342,6 @@ const styles = StyleSheet.create({
     padding: 20
   },
 
-  queryOptionToggleSwipe: {
-    justifyContent: "center",
-    alignItems: "flex-end",
-    backgroundColor: "rgba(240, 240, 240, 0.5)",
-    padding: 10
-  },
-
-  queryOptionToggleSwipeText: {
-    color: "black",
-    fontWeight: '600',
-    padding: 20
-  },
-
   priceView: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
@@ -387,5 +360,12 @@ const styles = StyleSheet.create({
     paddingTop: 2,
     paddingBottom: 2,
     maxWidth: '33%'
+  },
+
+  footerStyle: {
+    minHeight: 80,
+    minWidth: 80,
+    padding: 15,
+    flexDirection: 'column-reverse'
   }
 });

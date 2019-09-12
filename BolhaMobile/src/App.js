@@ -1,18 +1,24 @@
 import * as Bolha from './Bolha';
 import { QuerySectionsList } from './QuerySectionsList';
 import { QueryBuilderList } from './QueryBuilderList';
+import { InputDialog } from './InputDialog';
+import { AddButton, FetchButton } from './Buttons';
 
 import React, { Component } from 'react';
 import { 
   Button, 
   View, 
-  AppState, 
+  AppState,
+  Text,
+  Image,
+  StyleSheet
 } from 'react-native';
 import { TabView } from 'react-native-tab-view';
 import AsyncStorage from '@react-native-community/async-storage';
+import { RectButton } from 'react-native-gesture-handler';
 
 
-class SettingsScreen extends Component {
+class SettingsScreen extends Component {  
   /* props:
     queries : [{queryInfo: QueryInfo ...}]
     queryAdded
@@ -21,22 +27,54 @@ class SettingsScreen extends Component {
     queryTapped
   */
 
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      inputDialogVisible: false
+    };
+  }
+
+  _onQueryAdded = (queryText) => {
+    let query = new Bolha.QueryInfo({ query: queryText });
+    this.props.queryAdded(query);
+    this.setState({ inputDialogVisible: false });
+  }
+
+  _inputDialogCancelled = () => {
+    this.setState({ inputDialogVisible: false });
+  }
+
   render() {
     return (
-      <QueryBuilderList 
-        style={{flex: 1}}
-        queries={this.props.queries}
-        queryAdded={this.props.queryAdded}
-        queryRemoved={this.props.queryRemoved}
-        queryChanged={this.props.queryChanged}
-        queryTapped={this.props.queryTapped}
-      />  
+      <View style={{flex: 1}}>
+        <InputDialog 
+          visible={this.state.inputDialogVisible}
+          onConfirm={this._onQueryAdded}
+          onCancel={this._inputDialogCancelled}
+        />
+
+        <QueryBuilderList 
+          queries={this.props.queries}
+          queryRemoved={this.props.queryRemoved}
+          queryChanged={this.props.queryChanged}
+          queryTapped={this.props.queryTapped}
+        />
+
+        {AddButton(() => this.setState({ inputDialogVisible: true }))}
+      </View>
     );
   }
 }
 
 
 class HomeScreen extends Component {
+  /* props:
+    queries
+    setSectionListRef
+    onFetchAll
+  */
+
   constructor(props) {
     super(props);
   }
@@ -50,10 +88,7 @@ class HomeScreen extends Component {
           setSectionListRef={this.props.setSectionListRef}
         />
 
-        <Button
-          onPress={this.props.onFetchAll}
-          title={'Fetch all'}
-        />
+        {FetchButton(this.props.onFetchAll)}
       </View>
     );
   }
