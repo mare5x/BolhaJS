@@ -36,13 +36,13 @@ class QueryInfoItem extends Component {
 
     const queryInfo = props.queryInfo;
     const { price_min, price_max, sort, date, pages, enabled } = queryInfo;
-    const initialPages = (pages < 0) 
+    this.initialPages = (pages < 0) 
       ? this._MAX_PAGES_VALUE : pages;
 
     this.state = {
       sortOption: sort,
       dateOption: date,
-      pagesValue: initialPages,
+      pagesValue: this.initialPages,
       priceMin: price_min,
       priceMax: price_max,
       enabled: enabled
@@ -172,19 +172,6 @@ class QueryInfoItem extends Component {
     );
   }
 
-  _PageSlider = (props) => {
-    return (
-      <Slider 
-        {...props}
-        step={1}
-        minimumValue={1}
-        maximumValue={this._MAX_PAGES_VALUE}
-        onValueChange={this._pageValueChanged}
-        onSlidingComplete={this._pageValueComplete}
-      />
-    );
-  }
-
   _PriceInput = (props) => {
     return (
       <TextInput 
@@ -253,7 +240,14 @@ class QueryInfoItem extends Component {
         </View>
 
         <Text>Pages: {pages}</Text>
-        <this._PageSlider value={this.state.pagesValue}/>
+        <Slider 
+          value={this.initialPages}
+          step={1}
+          minimumValue={1}
+          maximumValue={this._MAX_PAGES_VALUE}
+          onValueChange={this._pageValueChanged}
+          onSlidingComplete={this._pageValueComplete}
+        />
       </View>
     </Swipeable>
     );
