@@ -10,6 +10,68 @@ import {
   StyleSheet, 
   ActivityIndicator
 } from 'react-native';
+import { RectButton, BaseButton } from 'react-native-gesture-handler';
+
+
+class ArticleItem extends React.PureComponent {
+  static Header(props) {
+    const { title, price } = props;
+    return (
+      <RectButton 
+        onPress={props.onTap}
+        style={styles.articleHeader}
+      >
+        <Text style={styles.articleHeaderTitle}>
+          {title}
+        </Text>
+        <Text style={styles.articleHeaderPrice}>
+          {price}
+        </Text>
+      </RectButton>
+    );
+  }
+
+  static Summary(props) {
+    const { summary, image, link } = props;
+    return (
+      <View>
+        <Text>{summary.trim()}</Text>
+        <BaseButton 
+          style={{flexDirection: "row", justifyContent: "center"}}
+          onPress={() => Linking.openURL(link)}
+        >
+          <Image 
+            source={{uri: image}} 
+            style={styles.previewImage}
+          />
+        </BaseButton>
+      </View>
+    );
+  }
+
+  render() {
+    const { title, link, price, summary, image } = this.props.article;
+    const showDetails = this.props.showDetails;
+    
+    const summaryItem = showDetails 
+      ? <ArticleItem.Summary 
+          summary={summary} 
+          image={image} 
+          link={link}/>
+      : null;
+
+    return (
+      <View>
+        <ArticleItem.Header 
+          title={title} 
+          price={price} 
+          onTap={this.props.onTap} 
+        />
+        {summaryItem}
+      </View>
+    );
+  }
+}
 
 
 export class QuerySectionsList extends Component {
@@ -17,6 +79,9 @@ export class QuerySectionsList extends Component {
     super(props);
 
     this._sectionListRef = null;
+    this.state = {
+      refresh: false   // Update the list by toggling this variable.
+    };
   }
 
   _getSectionTitle = (queryInfo) => {
@@ -35,19 +100,14 @@ export class QuerySectionsList extends Component {
 
   _sectionRenderItem = ({ item, index, section }) => {
     return (
-    <View>
-      <Text style={{color: 'blue'}}
-        onPress={() => Linking.openURL(item.link)}>
-          {item.title} | {item.price}
-      </Text>
-      <Text>{item.summary.trim()}</Text>
-      <View style={{flexDirection: "row", justifyContent: "center"}}>
-        <Image 
-          source={{uri: item.image}} 
-          style={styles.previewImage}
-        />
-      </View>
-    </View>
+      <ArticleItem 
+        article={item} 
+        showDetails={item.showDetails}
+        onTap={() => {
+          item.showDetails = item.showDetails ? false : true;
+          this.setState(state => ({ refresh: !state.refresh }));
+        }}
+      />
     );
   }
 
@@ -95,6 +155,7 @@ export class QuerySectionsList extends Component {
           this.props.setSectionListRef(component)
         }}
         onScrollToIndexFailed={(info) => console.error(info)}
+        extraData={this.state.refresh}
       />
     );
   }
@@ -138,5 +199,28 @@ const styles = StyleSheet.create({
       minWidth: 80,
       padding: 5,
       flexDirection: 'column-reverse'
+    },
+
+    articleHeader: {
+      backgroundColor: 'rgb(200,200,247)',
+      padding: 10,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 10,
+      borderRadius: 10
+    },
+
+    articleHeaderTitle: {
+      color: 'blue', 
+      fontWeight: 'bold', 
+      fontSize: 14, 
+      maxWidth: '66%'
+    },
+
+    articleHeaderPrice: {
+      color: 'green', 
+      fontWeight: 'bold', 
+      fontSize: 18
     }
   });
