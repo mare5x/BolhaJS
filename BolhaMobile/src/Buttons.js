@@ -1,38 +1,43 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { 
   Image, 
   StyleSheet, 
+  Animated,
+  TouchableOpacity
 } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 
 
-export const JumpButton = (onPress) => {
+export const JumpButton = (props) => {
   return (
-    <RectButton 
-      onPress={onPress}
-      style={styles.jumpButton}
+    <Animated.View 
+      style={[styles.circleButton, styles.floatBottomLeft, props.style]}
     >
-      <Image source={require('../img/up.png')} style={{width: floatButtonRadius, height: floatButtonRadius}} />
-    </RectButton>
+      <TouchableOpacity
+        onPress={props.onPress}
+      >
+        <Image source={require('../img/up.png')} style={{width: floatButtonRadius, height: floatButtonRadius}} />
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
-export const AddButton = (onPress) => {
+export const AddButton = (props) => {
   return (
     <RectButton 
-      onPress={onPress}
-      style={styles.floatButton}
+      onPress={props.onPress}
+      style={[styles.circleButton, styles.floatBottomRight]}
     >
       <Image source={require('../img/add.png')} style={{width: floatButtonRadius, height: floatButtonRadius}} />
     </RectButton>
   );
 }
 
-export const FetchButton = (onPress) => {
+export const FetchButton = (props) => {
   return (
     <RectButton 
-      onPress={onPress}
-      style={styles.floatButton}
+      onPress={props.onPress}
+      style={[styles.circleButton, styles.floatBottomRight]}
     >
       <Image source={require('../img/fetch.png')} style={{width: floatButtonRadius, height: floatButtonRadius}} />
     </RectButton>
@@ -43,7 +48,7 @@ export const FetchButton = (onPress) => {
 const floatButtonRadius = 28;
 
 const styles = StyleSheet.create({
-  jumpButton: {
+  circleButton: {
     borderRadius: floatButtonRadius, 
     width: 2 * floatButtonRadius, 
     height: 2 * floatButtonRadius, 
@@ -60,19 +65,16 @@ const styles = StyleSheet.create({
     // Elevation is Android only.
   },
 
-  floatButton: {
-    borderRadius: floatButtonRadius, 
-    width: 2 * floatButtonRadius, 
-    height: 2 * floatButtonRadius, 
-    padding: 20, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#177cff',
-    elevation: 8,
-
+  floatBottomRight: {
     position: 'absolute', 
     bottom: 15, 
     right: 15
+  },
+
+  floatBottomLeft: {
+    position: 'absolute',
+    bottom: 15,
+    left: 15
   }
 });
 

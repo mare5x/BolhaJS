@@ -266,7 +266,24 @@ export class QueryBuilderList extends Component {
   constructor(props) {
     super(props);
 
+    this._prevScroll = 0;
+    this._scrollDelta = 0;
     this._listRef = null;
+  }
+  
+  _onScroll = ({ nativeEvent }) => {
+    const scrollY = nativeEvent.contentOffset.y;
+    // down > 0, up < 0
+    const dy = scrollY - this._prevScroll;
+    // If direction changed.
+    if (Math.sign(dy) !== Math.sign(this._scrollDelta)) {
+      this._scrollDelta = 0;
+    }
+    this._scrollDelta += dy;
+    this._prevScroll = scrollY;
+    if (this._scrollDelta !== 0) {
+      this.props.onScroll(this._scrollDelta);
+    }
   }
 
   _renderQueryInfo = ({ item }) => {
@@ -287,19 +304,17 @@ export class QueryBuilderList extends Component {
     }
   }
 
-  _jumpToTopButton = () => {
-    return JumpButton(this._jumpToTop);
-  }
-
   render() {
     return (
       <FlatList
         data={this.props.queries}
         renderItem={this._renderQueryInfo}
         ItemSeparatorComponent={Separator}
-        ListFooterComponent={this._jumpToTopButton}
+        ListFooterComponent={<View/>}
         ListFooterComponentStyle={styles.footerStyle}
         ref={component => this._listRef = component}
+        onScroll={this._onScroll}
+        scrollEventThrottle={15}
       />
     );
   }

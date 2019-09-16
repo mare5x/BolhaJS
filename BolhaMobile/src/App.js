@@ -2,20 +2,81 @@ import * as Bolha from './Bolha';
 import { QuerySectionsList } from './QuerySectionsList';
 import { QueryBuilderList } from './QueryBuilderList';
 import { InputDialog } from './InputDialog';
-import { AddButton, FetchButton } from './Buttons';
+import { AddButton, FetchButton, JumpButton } from './Buttons';
 
 import React, { Component } from 'react';
 import { 
-  Button, 
   View, 
   AppState,
-  Text,
-  Image,
-  StyleSheet
+  Animated
 } from 'react-native';
 import { TabView } from 'react-native-tab-view';
 import AsyncStorage from '@react-native-community/async-storage';
-import { RectButton } from 'react-native-gesture-handler';
+
+
+class BaseScreen extends Component {
+  constructor(props) {
+    super(props);
+
+    this._animatedJumpY = new Animated.Value(-56);
+    this.state = {
+      jumpVisible: false,
+    };
+  }
+
+  _showJumpButton = () => {
+    if (this.state.jumpVisible) return;
+
+    // this._animatedJumpY.setValue(-56);
+    Animated.timing(
+      this._animatedJumpY, 
+      {
+        toValue: 15,
+        duration: 250
+      }
+    ).start();
+    this.setState({ jumpVisible: true });
+  }
+
+  _hideJumpButton = () => {
+    if (!this.state.jumpVisible) return;
+
+    // this._animatedJumpY.setValue(15);
+    Animated.timing(
+      this._animatedJumpY,
+      {
+        toValue: -56,
+        duration: 250
+      }
+    ).start((info) => {
+      if (info.finished) {
+        this.setState({jumpVisible: false});  // Callback.
+      }
+    });
+  }
+
+  _onScroll = (dy) => {
+    if (dy < -20) {
+      this._showJumpButton();
+    } else if (dy > 20) {
+      this._hideJumpButton();
+    }
+  }
+
+  render() {
+    // Without the flex: 1, the list is cut off!
+    return (
+      <View style={{flex: 1}}>
+        {this.props.children}
+
+        <JumpButton 
+          onPress={this.props.onJump}
+          style={{bottom: this._animatedJumpY}}
+        />
+      </View>
+    );
+  }
+}
 
 
 class SettingsScreen extends Component {  
@@ -29,6 +90,9 @@ class SettingsScreen extends Component {
 
   constructor(props) {
     super(props);
+
+    this._baseScreenRef = {};
+    this._listRef = {};
 
     this.state = {
       inputDialogVisible: false
@@ -47,7 +111,10 @@ class SettingsScreen extends Component {
 
   render() {
     return (
-      <View style={{flex: 1}}>
+      <BaseScreen
+        onJump={this._listRef._jumpToTop}
+        ref={component => this._baseScreenRef = component}
+      >
         <InputDialog 
           visible={this.state.inputDialogVisible}
           onConfirm={this._onQueryAdded}
@@ -59,10 +126,14 @@ class SettingsScreen extends Component {
           queryRemoved={this.props.queryRemoved}
           queryChanged={this.props.queryChanged}
           queryTapped={this.props.queryTapped}
+          onScroll={this._baseScreenRef._onScroll}
+          ref={component => this._listRef = component}
         />
 
-        {AddButton(() => this.setState({ inputDialogVisible: true }))}
-      </View>
+        <AddButton
+          onPress={() => this.setState({ inputDialogVisible: true })}
+        />
+      </BaseScreen>
     );
   }
 }
@@ -77,19 +148,28 @@ class HomeScreen extends Component {
 
   constructor(props) {
     super(props);
+
+    this._baseScreenRef = {};
+    this._queryListRef = {};
   }
 
   render() {
-    // Without the flex: 1, the list is cut off!
     return (
-      <View style={{flex: 1}}>
+      <BaseScreen
+        onJump={this._queryListRef._jumpToTop}
+        ref={component => this._baseScreenRef = component}
+      >
         <QuerySectionsList 
           queries={this.props.queries}
           setSectionListRef={this.props.setSectionListRef}
+          onScroll={this._baseScreenRef._onScroll}
+          ref={component => this._queryListRef = component}
         />
 
-        {FetchButton(this.props.onFetchAll)}
-      </View>
+        <FetchButton
+          onPress={this.props.onFetchAll}
+        />
+      </BaseScreen>
     );
   }
 }

@@ -75,13 +75,34 @@ class ArticleItem extends React.PureComponent {
 
 
 export class QuerySectionsList extends Component {
+  /* props:
+
+  */
+
   constructor(props) {
     super(props);
 
     this._sectionListRef = null;
+    this._prevScroll = 0;
+    this._scrollDelta = 0;
     this.state = {
       refresh: false   // Update the list by toggling this variable.
     };
+  }
+
+  _onScroll = ({ nativeEvent }) => {
+    const scrollY = nativeEvent.contentOffset.y;
+    // down > 0, up < 0
+    const dy = scrollY - this._prevScroll;
+    // If direction changed.
+    if (Math.sign(dy) !== Math.sign(this._scrollDelta)) {
+      this._scrollDelta = 0;
+    }
+    this._scrollDelta += dy;
+    this._prevScroll = scrollY;
+    if (this._scrollDelta !== 0) {
+      this.props.onScroll(this._scrollDelta);
+    }
   }
 
   _getSectionTitle = (queryInfo) => {
@@ -92,10 +113,6 @@ export class QuerySectionsList extends Component {
     if (this.props.queries.length > 0) {
       this._sectionListRef.scrollToLocation({ sectionIndex: 0, itemIndex: 0 });
     }
-  }
-
-  _jumpToTopButton = () => {
-    return JumpButton(this._jumpToTop);
   }
 
   _sectionRenderItem = ({ item, index, section }) => {
@@ -148,7 +165,7 @@ export class QuerySectionsList extends Component {
         renderItem={this._sectionRenderItem}
         renderSectionHeader={this._sectionRenderHeader}
         contentContainerStyle={styles.sectionListItem}
-        ListFooterComponent={this._jumpToTopButton}
+        ListFooterComponent={<View/>}
         ListFooterComponentStyle={styles.footerStyle}
         ref={component => {
           this._sectionListRef = component;
@@ -156,6 +173,8 @@ export class QuerySectionsList extends Component {
         }}
         onScrollToIndexFailed={(info) => console.error(info)}
         extraData={this.state.refresh}
+        onScroll={this._onScroll}
+        scrollEventThrottle={15}
       />
     );
   }
