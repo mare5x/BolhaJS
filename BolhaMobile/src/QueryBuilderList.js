@@ -1,5 +1,5 @@
 import * as Bolha from './Bolha';
-import { JumpButton } from './Buttons';
+import { DeleteButton } from './Buttons';
 
 import React, { Component } from 'react';
 import { 
@@ -7,7 +7,6 @@ import {
   View, 
   FlatList, 
   TouchableOpacity, 
-  Animated, 
   StyleSheet, 
   Picker, 
   TextInput, 
@@ -157,17 +156,13 @@ class QueryInfoItem extends Component {
 
     return (
       <View style={styles.queryOptionDeleteSwipe}>
-        <TouchableOpacity onPress={this._onDeleteAction}>
-          <Animated.Text 
-            style={[
-              styles.queryOptionDeleteSwipeText,
-              { 
-                transform: [{ scale }]
-              }]
-            }>
-            Delete
-          </Animated.Text>
-        </TouchableOpacity>
+        <DeleteButton 
+          onPress={this._onDeleteAction}
+          style={{
+            backgroundColor: 'red',
+            transform: [{ scale }]
+          }}
+        />
       </View>
     );
   }

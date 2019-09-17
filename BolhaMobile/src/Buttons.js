@@ -44,6 +44,20 @@ export const FetchButton = (props) => {
   );
 }
 
+export const DeleteButton = (props) => {
+  return (
+    <Animated.View 
+      style={[styles.circleButton, props.style]}
+    >
+      <TouchableOpacity
+        onPress={props.onPress}
+      >
+        <Image source={require('../img/delete.png')} style={{width: floatButtonRadius, height: floatButtonRadius}} />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 
 const floatButtonRadius = 28;
 

@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import { 
-  Button, View, TextInput, Modal, StyleSheet,
-  TouchableWithoutFeedback, Keyboard } from 'react-native';
+  Button, 
+  View, 
+  TextInput, 
+  Modal,
+  StyleSheet,
+  TouchableWithoutFeedback, 
+  Keyboard 
+} from 'react-native';
 
 
 export class InputDialog extends Component {
